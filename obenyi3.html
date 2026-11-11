@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #071b35, #147d92);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 420px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #102b46;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            text-align: center;
+            color: gray;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #147d92;
+        }
+
+        .currency-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .currency-box select {
+            flex: 1;
+        }
+
+        .swap {
+            text-align: center;
+            margin: 18px 0;
+        }
+
+        .swap button {
+            background: #147d92;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .convert-btn {
+            width: 100%;
+            background: #102b46;
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            margin-top: 25px;
+            font-size: 17px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .result {
+            background: #eaf6f7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .result h2 {
+            color: #147d92;
+            margin-top: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        #status {
+            text-align: center;
+            color: gray;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Currency Converter</h1>
+
+        <p class="description">
+            Convert your money into different currencies.
+        </p>
+
+        <label>Enter Amount</label>
+        <input type="number" id="amount"
+               placeholder="Enter amount" value="1000" min="0">
+
+        <label>From Currency</label>
+        <div class="currency-box">
+            <select id="fromCurrency">
+                <option value="NGN">NGN - Nigerian Naira</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GHS">GHS - Ghanaian Cedi</option>
+                <option value="CAD">CAD - Canadian Dollar</option>
+                <option value="INR">INR - Indian Rupee</option>
+                <option value="JPY">JPY - Japanese Yen</option>
+            </select>
+        </div>
+
+        <div class="swap">
+            <button onclick="swapCurrency()">⇅ Swap Currency</button>
+        </div>
+
+        <label>To Currency</label>
+        <select id="toCurrency">
+            <option value="USD">USD - US Dollar</option>
+            <option value="NGN">NGN - Nigerian Naira</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="EUR">EUR - Euro</option>
+            <option value="GHS">GHS - Ghanaian Cedi</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="INR">INR - Indian Rupee</option>
+            <option value="JPY">JPY - Japanese Yen</option>
+        </select>
+
+        <button class="convert-btn" onclick="convertCurrency()">
+            Convert Currency
+        </button>
+
+        <div class="result">
+            <p>Converted Amount</p>
+            <h2 id="result">0.00</h2>
+        </div>
+
+        <p id="status">Ready to convert.</p>
+
+    </div>
+
+    <script>
+
+        async function convertCurrency() {
+
+            const amount = parseFloat(
+                document.getElementById("amount").value
+            );
+
+            const from = document.getElementById("fromCurrency").value;
+            const to = document.getElementById("toCurrency").value;
+
+            const result = document.getElementById("result");
+            const status = document.getElementById("status");
+
+            if (isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid amount.");
+                return;
+            }
+
+            status.innerText = "Getting exchange rate...";
+
+            try {
+
+                const response = await fetch(
+                    `https://open.er-api.com/v6/latest/${from}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || data.result !== "success") {
+                    throw new Error("Exchange rate unavailable.");
+                }
+
+                const rate = data.rates[to];
+
+                if (!rate) {
+                    throw new Error("Currency not supported.");
+                }
+
+                const convertedAmount = amount * rate;
+
+                result.innerText = new Intl.NumberFormat(
+                    "en-US",
+                    {
+                        style: "currency",
+                        currency: to
+                    }
+                ).format(convertedAmount);
+
+                status.innerText =
+                    `1 ${from} = ${rate.toFixed(4)} ${to}`;
+
+            } catch (error) {
+
+                result.innerText = "Conversion failed";
+                status.innerText =
+                    "Unable to connect. Please try again.";
+
+            }
+
+        }
+
+        function swapCurrency() {
+
+            const from = document.getElementById("fromCurrency");
+            const to = document.getElementById("toCurrency");
+
+            const temporary = from.value;
+
+            from.value = to.value;
+            to.value = temporary;
+
+            convertCurrency();
+        }
+
+    </script>
+
+</body>
+</html>
